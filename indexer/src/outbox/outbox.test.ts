@@ -195,6 +195,7 @@ describe("outbox: transactional ingestion", () => {
       store.ingest(decodedEvent("ev-1", 10));
       const row = store.outbox.replayEvents("1", 0, 10);
       assert.equal(row.events[0].ledger_cursor, "cursor-10-ev-1");
+      assert.equal(row.events[0].ledger_closed_at, "2026-01-01T00:00:00.000Z");
     } finally {
       store.close();
     }
