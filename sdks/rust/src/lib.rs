@@ -43,6 +43,7 @@
 use stellar_strkey::{ed25519, Strkey};
 use stellar_xdr::{AccountId, ContractId, Hash, PublicKey, ScAddress, ScError, ScVal, Uint256};
 
+#[rustfmt::skip]
 mod generated;
 
 pub use generated::*;
@@ -152,10 +153,7 @@ impl core::fmt::Display for DecodeError {
                 context,
                 expected,
                 found,
-            } => write!(
-                formatter,
-                "{context}: expected {expected}, found {found}"
-            ),
+            } => write!(formatter, "{context}: expected {expected}, found {found}"),
             Self::InvalidLength {
                 context,
                 expected,
@@ -408,9 +406,9 @@ pub fn address_to_scval(value: &str) -> Result<ScVal, EncodeError> {
         Ok(Strkey::PublicKeyEd25519(key)) => Ok(ScVal::Address(ScAddress::Account(AccountId(
             PublicKey::PublicKeyTypeEd25519(Uint256(key.0)),
         )))),
-        Ok(Strkey::Contract(contract)) => Ok(ScVal::Address(ScAddress::Contract(ContractId(Hash(
-            contract.0,
-        ))))),
+        Ok(Strkey::Contract(contract)) => Ok(ScVal::Address(ScAddress::Contract(ContractId(
+            Hash(contract.0),
+        )))),
         _ => Err(EncodeError::InvalidAddress {
             value: value.to_string(),
         }),

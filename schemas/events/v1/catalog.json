@@ -20,6 +20,18 @@
       "struct": "AdvanceRepaid"
     },
     {
+      "event_key": "batch_amendment_applied",
+      "fingerprint": "sha256:4907f66aa084a06905923da33a5643b66130fd301f98b86d27d9fda5003d2bbf",
+      "schema": "events/batch_amendment_applied.json",
+      "struct": "BatchAmendmentApplied"
+    },
+    {
+      "event_key": "batch_amendment_proposed",
+      "fingerprint": "sha256:7c7b94e9404deca9c36bb504141d5970828d9aaaa2fd40db5403471765d18e77",
+      "schema": "events/batch_amendment_proposed.json",
+      "struct": "BatchAmendmentProposed"
+    },
+    {
       "event_key": "batch_withdraw_summary",
       "fingerprint": "sha256:59b5ba85df9a81a2bcce7610b21b724aa1e5093d0d44a54cd46370ae0dfb6860",
       "schema": "events/batch_withdraw_summary.json",
@@ -30,6 +42,24 @@
       "fingerprint": "sha256:8a457d9c30ee67b51c5709af2eb838deacb19d55dc53a93055734d920e77e7d7",
       "schema": "events/beneficiary_enrolled.json",
       "struct": "BeneficiaryEnrolled"
+    },
+    {
+      "event_key": "claim_filed",
+      "fingerprint": "sha256:7c12db9e7f65ed7fb296c8126d15e99d468689658ec4e9a7d3f68933a4c12839",
+      "schema": "events/claim_filed.json",
+      "struct": "ClaimFiled"
+    },
+    {
+      "event_key": "claim_paid",
+      "fingerprint": "sha256:946cca73f9740203f4348ee5127467ec30bc69e832680a890863483a710509e9",
+      "schema": "events/claim_paid.json",
+      "struct": "ClaimPaid"
+    },
+    {
+      "event_key": "claim_rejected",
+      "fingerprint": "sha256:9e9ad4bd703bda333f8ad1f182fcf8bb002087722163eb1a76807d3f3d9dffbd",
+      "schema": "events/claim_rejected.json",
+      "struct": "ClaimRejected"
     },
     {
       "event_key": "condition_expired",

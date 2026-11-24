@@ -1378,3 +1378,159 @@ pub struct HookFailed {
     pub callback_contract: Address,
     pub error_code: u32,
 }
+
+// Extension shapes stay registered for v1 compatibility until the contract split.
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a threshold-consent batch amendment is proposed."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BatchAmendmentProposed {
+    #[topic]
+    pub batch_id: u64,
+    pub sender: Address,
+    pub stream_ids: Vec<u64>,
+    pub expires_at: u64,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a consented batch amendment is applied to all its streams."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BatchAmendmentApplied {
+    #[topic]
+    pub batch_id: u64,
+    pub stream_ids: Vec<u64>,
+    pub effective_timestamp: u64,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a settled stream adds time-weighted voting power."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PowerAccrued {
+    #[topic]
+    pub participant: Address,
+    pub stream_id: u64,
+    pub power: u128,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a participant casts a time-weighted community vote."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VoteCast {
+    #[topic]
+    pub proposal_id: u64,
+    pub voter: Address,
+    pub power: u128,
+    pub support: bool,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a protocol-fee slice accrues to an insurance pool."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PremiumAccrued {
+    #[topic]
+    pub token: Address,
+    pub amount: i128,
+    pub pool_balance: i128,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a stream recipient files an insurance claim."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ClaimFiled {
+    #[topic]
+    pub claim_id: u64,
+    pub stream_id: u64,
+    pub recipient: Address,
+    pub amount: i128,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when an approved insurance claim is paid."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ClaimPaid {
+    #[topic]
+    pub claim_id: u64,
+    pub recipient: Address,
+    pub amount: i128,
+    pub remaining_balance: i128,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when the governor rejects an insurance claim."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ClaimRejected {
+    #[topic]
+    pub claim_id: u64,
+    pub reason: u32,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a sender spending policy rejects a stream or top-up."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PolicyViolation {
+    #[topic]
+    pub sender: Address,
+    pub stream_id: u64,
+    pub violation_code: u32,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a sender installs or updates a spending policy."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SenderPolicySet {
+    #[topic]
+    pub sender: Address,
+    pub version: u32,
+}
+
+#[cfg(any())]
+#[cfg_attr(
+    not(target_family = "wasm"),
+    doc = " Emitted when a sender revokes a spending policy."
+)]
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SenderPolicyRevoked {
+    #[topic]
+    pub sender: Address,
+    pub version: u32,
+}

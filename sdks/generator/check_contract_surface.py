@@ -98,18 +98,25 @@ NON_INVOKABLE = {"__constructor"}
 READ_ONLY = {
     "available",
     "beneficiary_spend",
+    "get_advance",
     "get_beneficiary_public_key",
+    "get_condition",
     "get_dispute",
+    "get_hook",
     "get_intent",
+    "get_receivables_config",
     "get_sponsor",
     "get_stream",
+    "get_stream_lineage",
     "get_stream_policy",
+    "get_template",
     "governance_is_initialized",
     "governance_proposal",
     "governance_proposal_count",
     "governance_signers",
     "governance_veto_window",
     "is_frozen",
+    "is_release_gated",
     "migration_progress",
     "oracle_config",
     "oracle_report",
@@ -640,7 +647,9 @@ def _contract_type(
     lines: list[str], line_index: int, attribute: str = "#[contracttype]"
 ) -> bool:
     attrs = attrs_before(lines, line_index)
-    return any(line.strip().startswith(attribute) for line in attrs.splitlines())
+    return "#[cfg(any())]" not in attrs and any(
+        line.strip().startswith(attribute) for line in attrs.splitlines()
+    )
 
 
 def parse_errors(source: str) -> list[dict]:

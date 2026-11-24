@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/sender_policy_revoked.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when a sender revokes a spending policy.",
   "properties": {
     "version": {
       "maximum": 4294967295,

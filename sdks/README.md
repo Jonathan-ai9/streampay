@@ -10,7 +10,7 @@ is derived from the contract's own sources.
 | Conformance vectors | [`vectors/`](./vectors) | this change |
 | TypeScript client | [`typescript/`](./typescript) (workspace / `npm pack` only, not on npm) | this change |
 | Rust client (read-only) | [`rust/`](./rust) | this change |
-| Python client | — | later |
+| Python client (read-only) | [`python/`](./python) | this change |
 
 Language packages land separately so each one is reviewed against the shared
 spec on its own. This directory holds only what every language shares.
@@ -31,7 +31,9 @@ sdks/
   typescript/                     generated bindings + runtime + tests
   generator/emit_rust.py          IR -> rust/src/generated.rs (read operations only)
   rust/                           generated read-only crate + conformance test
-  Makefile                        spec / check / vectors
+  generator/emit_python.py        IR -> python/src/streampay/_generated.py
+  python/                         pip-installable read-only package + tests
+  Makefile                        spec / check / vectors / language tests
 ```
 
 ## The contract is the source of truth
@@ -77,24 +79,27 @@ The spec does **not** restate `StreamError`, and neither does any generated
 client. `generate.py` reads `(code, name)` pairs from the canonical catalog in
 `frontend/lib/errors.ts`, which `tooling/generate-error-catalog.mjs` generates
 from `errors.rs` and CI already gates for drift. A test checks that the
-catalog reader sees every `StreamError` variant with its contract code. This
-change touches no error code and no `surface.rs` branch.
+catalog reader sees every `StreamError` variant with its contract code. The
+generators never assign or renumber codes; regenerate the catalog whenever the
+contract's error enum changes.
 
 ## Generation, not hand-writing
 
 `generate.py` loads the spec and the error catalog and runs each
 `generator/emit_<language>.py` whose package directory exists. Today that is
 `emit_typescript.py` (writing `typescript/src/generated.ts` and
-`typescript/src/methods.ts`) and `emit_rust.py` (writing
-`rust/src/generated.rs`); the `--check` gate fails when any output differs from
-the generator. Generated files carry the spec fingerprint in their header; add
-behaviour in `client.ts` / `events.ts` / `lib.rs`, not in generated files.
+`typescript/src/methods.ts`), `emit_rust.py` (writing `rust/src/generated.rs`),
+and `emit_python.py` (writing `python/src/streampay/_generated.py`); the `--check`
+gate fails when any output differs from the generator. Generated files carry
+the spec fingerprint in their header; add behaviour in `client.ts` /
+`events.ts` / `lib.rs` / the Python runtime modules, not in generated files.
 
 ```bash
 make -C sdks spec          # re-derive the spec + fingerprint
-make -C sdks generate      # rewrite generated.ts + methods.ts
+make -C sdks generate      # rewrite every generated client
 make -C sdks check         # guard + tests + "regeneration is a no-op"
 make -C sdks test          # TypeScript typecheck + tests, incl. every vector
+make -C sdks test-python   # install the Python package + run its tests
 make -C sdks test-rust     # Rust conformance vectors + doctests
 ```
 
@@ -108,6 +113,35 @@ makes no network calls itself. `cargo test` decodes the shared read vectors
 (`get-stream-active`, `get-stream-cancelled`, `error-not-active`) and checks the
 `get_stream` argument builder against the signed envelope. See
 [`rust/README.md`](./rust/README.md).
+
+## Python client (read-only)
+
+`sdks/python` is a pip-installable, typed client with no runtime dependencies.
+It exposes every non-mutating spec operation through a transport you implement,
+the canonical `StreamError` enum, and typed decoders for every contract event.
+It never signs or submits transactions.
+
+```bash
+python -m pip install ./sdks/python
+```
+
+```python
+from streampay import ReadClient, ReadTransport
+
+class RpcTransport(ReadTransport):
+    def simulate(self, method, args):
+        return rpc.simulate_contract_call(method, args).result_xdr
+
+client = ReadClient(RpcTransport())
+stream = client.get_stream(1)
+print(stream.id)
+print(stream.to_dict())
+```
+
+Arguments are raw ScVal XDR bytes and results may be raw bytes or base64 XDR.
+Canonical dictionaries encode integers as decimal strings so `u128` values do
+not lose precision. See [`python/README.md`](./python/README.md) for events,
+errors, wheel building and verification.
 
 ## Conformance vectors
 
@@ -125,9 +159,10 @@ See [`vectors/README.md`](./vectors/README.md) for the format.
 
 ## Versioning and publishing
 
-The spec and the TypeScript package track the contract release line
-(currently `0.3.0`). `@streampay/sdk` is **not** on npm: install it from the
-workspace path or an `npm pack` tarball (see
-[`typescript/README.md`](./typescript/README.md)). Whether it is published at
-all is undecided and is the StreamPay maintainers' call; they would hold the
-npm scope and run any release. CI only runs `npm pack --dry-run`.
+The spec and all language packages track the contract release line (currently
+`0.3.0`). Neither `@streampay/sdk` nor `streampay-sdk` is published: install
+from the workspace path or an `npm pack` / Python wheel tarball (see
+[`typescript/README.md`](./typescript/README.md) and
+[`python/README.md`](./python/README.md)). Whether either package is published
+is undecided and is the StreamPay maintainers' call; CI only runs local package
+dry runs.

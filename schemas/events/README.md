@@ -37,6 +37,10 @@ schemas/events/
   turned around for the emit side: nothing reaches the wire before the
   registry knows about it, and the registry never promises an event that
   nothing emits.
+- **Disabled extension shapes.** Event structs marked `#[cfg(any())]` remain in
+  v1 with `"enabled": false`. Their schemas stay published for compatibility,
+  while SDK generation and the deployable contract exclude them until the
+  extension work is split into a budgeted contract.
 - **CI compatibility gate.** `scripts/event_compat_check.mjs` diffs the
   registry across the PR merge base (CI step *Event schema registry*). Removals
   and type changes fail the build; additions warn and must be recorded in

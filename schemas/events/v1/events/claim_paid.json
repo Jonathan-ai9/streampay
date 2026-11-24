@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/claim_paid.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when an approved insurance claim is paid.",
   "properties": {
     "amount": {
       "type": "integer",

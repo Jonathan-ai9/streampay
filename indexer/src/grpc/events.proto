@@ -58,16 +58,22 @@ package streampay.indexer.v1;
 option go_package = "github.com/Neziahtech/streampay/indexer/grpc";
 
 // Mirror of the canonical registry's event keys
-// (schemas/events/registry.json, registry v1; 62 events).
-// Alphabetical order, matching ALL_CONTRACT_EVENT_NAMES in
-// src/generated/events.ts. EVENT_NAME_UNSPECIFIED is the proto3 zero value.
+// (schemas/events/registry.json, registry v1; 73 events, including disabled
+// compatibility shapes). Alphabetical order, matching ALL_CONTRACT_EVENT_NAMES
+// in src/generated/events.ts. EVENT_NAME_UNSPECIFIED is the proto3 zero value;
+// existing event numbers are stable, so additions append new numbers.
 enum EventName {
   EVENT_NAME_UNSPECIFIED = 0;
   ADVANCE_DRAWN = 1;
   ADVANCE_LIQUIDATED = 2;
   ADVANCE_REPAID = 3;
+  BATCH_AMENDMENT_APPLIED = 63;
+  BATCH_AMENDMENT_PROPOSED = 64;
   BATCH_WITHDRAW_SUMMARY = 4;
   BENEFICIARY_ENROLLED = 5;
+  CLAIM_FILED = 65;
+  CLAIM_PAID = 66;
+  CLAIM_REJECTED = 67;
   CONDITION_EXPIRED = 6;
   CONDITION_MET = 7;
   CONDITION_REGISTERED = 8;
@@ -98,11 +104,16 @@ enum EventName {
   POLICY_HANDOFF_CANCELLED = 33;
   POLICY_HANDOFF_PROPOSED = 34;
   POLICY_INITIALIZED = 35;
+  POLICY_VIOLATION = 68;
+  POWER_ACCRUED = 69;
+  PREMIUM_ACCRUED = 70;
   RATE_CHANGE_ACCEPTED = 36;
   RATE_CHANGE_PROPOSED = 37;
   SCHEDULED_INTENT_CANCELLED = 38;
   SCHEDULED_INTENT_EXPIRED = 39;
   SCHEDULED_STREAM_EXECUTED = 40;
+  SENDER_POLICY_REVOKED = 71;
+  SENDER_POLICY_SET = 72;
   SENDER_TRANSFER_EXPIRED = 41;
   SENDER_TRANSFER_PROPOSED = 42;
   SENDER_TRANSFERRED = 43;
@@ -124,6 +135,7 @@ enum EventName {
   TEMPLATE_INSTANTIATED = 59;
   UPGRADE_CANCELLED = 60;
   UPGRADE_PROPOSED = 61;
+  VOTE_CAST = 73;
   WITHDRAWN = 62;
 }
 

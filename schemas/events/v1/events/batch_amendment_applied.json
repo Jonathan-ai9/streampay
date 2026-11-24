@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/batch_amendment_applied.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when a consented batch amendment is applied to all its streams.",
   "properties": {
     "effective_timestamp": {
       "minimum": 0,

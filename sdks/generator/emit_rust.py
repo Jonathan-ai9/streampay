@@ -200,6 +200,8 @@ def encode_expr(t: object, expr: str) -> str:
             f"hi: ({expr} >> 64) as u64, lo: {expr} as u64 "
             "})"
         )
+    if isinstance(t, str) and t not in VALUE_TYPES:
+        return f"{t}::to_scval({expr})"
     raise ValueError(f"cannot encode read argument of type {t!r}")
 
 
@@ -307,6 +309,23 @@ def generate_enum(enum: dict) -> list[str]:
     for case in cases:
         lines.append(f"            Self::{case['name']} => {quote(case['name'])},")
     lines.append("        }")
+    lines.append("    }")
+    lines.append("")
+    lines.append("    /// Encodes the contract's canonical wire representation of this enum.")
+    lines.append("    pub fn to_scval(self) -> ScVal {")
+    if enum["encoding"] == "u32":
+        lines.append("        match self {")
+        for case in cases:
+            lines.append(f"            Self::{case['name']} => ScVal::U32({case['value']}),")
+        lines.append("        }")
+    else:
+        lines.append("        ScVal::Vec(Some(")
+        lines.append("            vec![ScVal::Symbol(ScSymbol(")
+        lines.append("                self.name().as_bytes().to_vec().try_into().unwrap(),")
+        lines.append("            ))]")
+        lines.append("            .try_into()")
+        lines.append("            .unwrap(),")
+        lines.append("        ))")
     lines.append("    }")
     lines.append("")
     lines.append("    /// Decodes the contract's wire encoding of this enum.")
@@ -553,6 +572,8 @@ def generate_generated_rs() -> str:
     functions = read_functions()
     arg_types: list[object] = [arg["type"] for function in functions for arg in function["args"]]
     imported = ["ScVal"]
+    if enums:
+        imported.append("ScSymbol")
     if _mentions(arg_types, "i128"):
         imported.append("Int128Parts")
     if _mentions(arg_types, "u128"):

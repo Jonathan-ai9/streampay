@@ -1,9 +1,7 @@
 use std::path::PathBuf;
 
 use serde_json::Value;
-use stellar_xdr::{
-    HostFunction, Limits, OperationBody, ReadXdr, ScVal, TransactionEnvelope,
-};
+use stellar_xdr::{HostFunction, Limits, OperationBody, ReadXdr, ScVal, TransactionEnvelope};
 use streampay_sdk::{
     decode_contract_error, decode_get_stream_result, get_stream_args, StreamError, GET_STREAM,
     SPEC_FINGERPRINT,
@@ -43,14 +41,26 @@ fn read_vectors_decode_to_the_canonical_stream() {
             .unwrap_or_else(|error| panic!("{name}: {error}"));
         let expected = &vector["expected"]["result"]["ok"];
 
-        assert_eq!(stream.id.to_string(), expected_string(&expected["id"], "id"), "{name}");
-        assert_eq!(stream.sender, expected_string(&expected["sender"], "sender"), "{name}");
+        assert_eq!(
+            stream.id.to_string(),
+            expected_string(&expected["id"], "id"),
+            "{name}"
+        );
+        assert_eq!(
+            stream.sender,
+            expected_string(&expected["sender"], "sender"),
+            "{name}"
+        );
         assert_eq!(
             stream.recipient,
             expected_string(&expected["recipient"], "recipient"),
             "{name}"
         );
-        assert_eq!(stream.token, expected_string(&expected["token"], "token"), "{name}");
+        assert_eq!(
+            stream.token,
+            expected_string(&expected["token"], "token"),
+            "{name}"
+        );
         assert_eq!(
             stream.deposit.to_string(),
             expected_string(&expected["deposit"], "deposit"),

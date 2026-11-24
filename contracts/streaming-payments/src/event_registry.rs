@@ -25,8 +25,8 @@
 //! * `no_event_is_emitted_that_the_registry_does_not_declare` walks every
 //!   `publish()` call site in the crate: an event that is not declared by a
 //!   `#[contractevent]` struct cannot be published, and a declared event that
-//!   nothing publishes is dropped from the registry. This is the event-side
-//!   mirror of `surface.rs`, which forces every rejection branch to be declared.
+//!   nothing publishes fails the gate. Shapes disabled with `#[cfg(any())]`
+//!   remain in v1 with `enabled: false` until their contract split lands.
 //! * `every_contractevent_is_registered` proves the scan sees every
 //!   `#[contractevent]` struct anywhere under `src/`, including ones that are
 //!   never constructed by an existing test.
@@ -164,6 +164,7 @@ struct EventSpec {
     doc: String,
     topics: Vec<FieldSpec>,
     data: Vec<FieldSpec>,
+    enabled: bool,
 }
 
 impl EventSpec {
@@ -295,6 +296,13 @@ fn is_contractevent(item: &ItemStruct) -> bool {
     item.attrs
         .iter()
         .any(|a| a.path().is_ident("contractevent"))
+}
+
+fn is_disabled(item: &ItemStruct) -> bool {
+    item.attrs.iter().any(|a| {
+        a.path().is_ident("cfg")
+            && a.to_token_stream().to_string().replace(' ', "") == "#[cfg(any())]"
+    })
 }
 
 fn field_specs(item: &ItemStruct) -> Vec<FieldSpec> {
@@ -525,6 +533,7 @@ fn collect_items(file: &File, defs: &mut BTreeMap<String, DefKind>, events: &mut
                             .filter(|(_, t)| !*t)
                             .map(|(f, _)| f.clone())
                             .collect(),
+                        enabled: !is_disabled(s),
                     });
                 }
             }
@@ -719,16 +728,17 @@ fn registry_json(events: &[EventSpec], defs: &Definitions) -> serde_json::Value 
         }
         let fingerprint = e.fingerprint(defs);
         fingerprints.insert(e.struct_name.clone(), Value::String(fingerprint.clone()));
-        events_obj.insert(
-            e.struct_name.clone(),
-            json!({
-                "event_key": e.event_key,
-                "fingerprint": fingerprint,
-                "canonical": e.canonical(defs),
-                "topics": e.topics.iter().map(|f| json!({"name": f.name, "type": f.ty})).collect::<Vec<_>>(),
-                "data": e.data.iter().map(|f| json!({"name": f.name, "type": f.ty})).collect::<Vec<_>>(),
-            }),
-        );
+        let mut entry = json!({
+            "event_key": e.event_key,
+            "fingerprint": fingerprint,
+            "canonical": e.canonical(defs),
+            "topics": e.topics.iter().map(|f| json!({"name": f.name, "type": f.ty})).collect::<Vec<_>>(),
+            "data": e.data.iter().map(|f| json!({"name": f.name, "type": f.ty})).collect::<Vec<_>>(),
+        });
+        if !e.enabled {
+            entry["enabled"] = Value::Bool(false);
+        }
+        events_obj.insert(e.struct_name.clone(), entry);
     }
 
     let mut definitions_obj = Map::new();
@@ -995,6 +1005,7 @@ fn every_contractevent_is_registered() {
 /// cannot. This is the `surface.rs` rule applied to events: every rejection
 /// branch must be declared there, every `publish()` here must name a declared
 /// event, and every declared event must actually be published somewhere.
+/// Disabled extension shapes are still scanned so their v1 schemas stay pinned.
 ///
 /// Consequence for contributors: adding a field to an event is a three-file
 /// change in one commit — the struct, the `publish()` call site that fills it,

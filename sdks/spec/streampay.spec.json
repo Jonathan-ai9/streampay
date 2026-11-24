@@ -1882,7 +1882,7 @@
       "args": [],
       "returns": "ReceivablesConfig",
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "draw_advance",
@@ -1943,7 +1943,7 @@
         "option": "Advance"
       },
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "register_condition",
@@ -2014,7 +2014,7 @@
         "option": "StreamCondition"
       },
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "is_release_gated",
@@ -2027,7 +2027,7 @@
       ],
       "returns": "bool",
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "approve_template",
@@ -2104,7 +2104,7 @@
         "option": "StreamTemplate"
       },
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "get_stream_lineage",
@@ -2119,7 +2119,7 @@
         "option": "TemplateLineage"
       },
       "error": null,
-      "mutating": true
+      "mutating": false
     },
     {
       "name": "register_hook",
@@ -2192,7 +2192,7 @@
         "option": "StreamHook"
       },
       "error": null,
-      "mutating": true
+      "mutating": false
     }
   ],
   "structs": [

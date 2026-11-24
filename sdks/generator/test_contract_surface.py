@@ -196,6 +196,9 @@ class SpecCoverageTest(unittest.TestCase):
 
     def test_events_match_the_canonical_event_registry(self) -> None:
         registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))["events"]
+        registry = {
+            name: entry for name, entry in registry.items() if entry.get("enabled", True)
+        }
         spec_events = {event["name"]: event for event in self.spec["events"]}
         self.assertEqual(sorted(spec_events), sorted(registry))
         for name, entry in registry.items():
@@ -207,6 +210,28 @@ class SpecCoverageTest(unittest.TestCase):
                         [(f["name"], f["type"]) for f in event[spec_key]],
                         [(f["name"], guard.parse_type(f["type"])) for f in entry[registry_key]],
                     )
+
+    def test_disabled_event_shapes_remain_registered(self) -> None:
+        registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))["events"]
+        disabled = {
+            name for name, entry in registry.items() if entry.get("enabled") is False
+        }
+        self.assertTrue(
+            {
+                "BatchAmendmentApplied",
+                "BatchAmendmentProposed",
+                "ClaimFiled",
+                "ClaimPaid",
+                "ClaimRejected",
+                "PolicyViolation",
+                "PowerAccrued",
+                "PremiumAccrued",
+                "SenderPolicyRevoked",
+                "SenderPolicySet",
+                "VoteCast",
+            }
+            <= disabled
+        )
 
     def test_shared_types_match_the_canonical_event_registry(self) -> None:
         definitions = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))["definitions"]
@@ -221,6 +246,16 @@ class SpecCoverageTest(unittest.TestCase):
             if function["doc"].lower().startswith(("read-only", "reads ", "returns ", "queries ")):
                 with self.subTest(entrypoint=function["name"]):
                     self.assertIn(function["name"], guard.READ_ONLY)
+        pure_getters = {
+            "get_receivables_config",
+            "get_advance",
+            "get_condition",
+            "is_release_gated",
+            "get_template",
+            "get_stream_lineage",
+            "get_hook",
+        }
+        self.assertTrue(pure_getters <= guard.READ_ONLY)
 
     def test_unit_enums_record_their_wire_encoding(self) -> None:
         for enum in self.spec["enums"]:

@@ -6,6 +6,28 @@ be mentioned here — by event struct name and field name — before the PR can
 merge. Breaking changes are rejected outright; they need a governed
 v1 → v2 migration (see [README.md](README.md#versioning-v1--v2-coexistence)).
 
+## v1.0.5 — 2026-11-24 (disabled extension shapes, #500)
+
+The extension merge left eleven JSON Schemas and their source declarations
+without coherent deployable wiring. Their v1 schemas remain published, but the
+shapes are now marked `enabled: false` and excluded from the generated SDK
+surface until the extension contract split fits the Wasm budget. No existing
+fingerprint or field changed; the registry entry count is 68 → 73, with 62
+enabled events.
+
+Five schemas already existed on main but were missing from `registry.json` and
+`v1/catalog.json`; regeneration adds their entries:
+
+- `BatchAmendmentApplied`: added event (topic `batch_id:u64`, data `stream_ids:Vec<u64>`, `effective_timestamp:u64`).
+- `BatchAmendmentProposed`: added event (topic `batch_id:u64`, data `sender:Address`, `stream_ids:Vec<u64>`, `expires_at:u64`).
+- `ClaimFiled`: added event (topic `claim_id:u64`, data `stream_id:u64`, `recipient:Address`, `amount:i128`).
+- `ClaimPaid`: added event (topic `claim_id:u64`, data `recipient:Address`, `amount:i128`, `remaining_balance:i128`).
+- `ClaimRejected`: added event (topic `claim_id:u64`, data `reason:u32`).
+
+The six already-registered extension shapes are also marked disabled without a
+wire change: `PolicyViolation`, `PowerAccrued`, `PremiumAccrued`,
+`SenderPolicyRevoked`, `SenderPolicySet`, and `VoteCast`.
+
 ## v1.0.4 — 2026-11-20 (receivables advances, release conditions, stream templates and callback hooks, #620)
 
 Eleven additive events; no existing event changed shape (entry count 51 → 62).

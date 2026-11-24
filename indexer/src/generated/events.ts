@@ -70,6 +70,23 @@ export interface AdvanceRepaidEvent {
   remaining_owed: bigint;
 }
 
+/** Emitted when a consented batch amendment is applied to all its streams. */
+/** Event key `batch_amendment_applied` — fingerprint `sha256:4907f66aa084a06905923da33a5643b66130fd301f98b86d27d9fda5003d2bbf`. */
+export interface BatchAmendmentAppliedEvent {
+  batch_id: bigint;
+  stream_ids: bigint[];
+  effective_timestamp: bigint;
+}
+
+/** Emitted when a threshold-consent batch amendment is proposed. */
+/** Event key `batch_amendment_proposed` — fingerprint `sha256:7c7b94e9404deca9c36bb504141d5970828d9aaaa2fd40db5403471765d18e77`. */
+export interface BatchAmendmentProposedEvent {
+  batch_id: bigint;
+  sender: string;
+  stream_ids: bigint[];
+  expires_at: bigint;
+}
+
 /** Emitted once after a `withdraw_many` batch settles, alongside the per-stream [`Withdrawn`] events. The per-stream shape is unchanged so existing consumers keep working; this event is the batch-level view: every entry that paid, the total, and how many of the requested ids were skipped. */
 /** Event key `batch_withdraw_summary` — fingerprint `sha256:59b5ba85df9a81a2bcce7610b21b724aa1e5093d0d44a54cd46370ae0dfb6860`. */
 export interface BatchWithdrawSummaryEvent {
@@ -86,6 +103,31 @@ export interface BeneficiaryEnrolledEvent {
   beneficiary: string;
   kind: string;
   public_key: Uint8Array;
+}
+
+/** Emitted when a stream recipient files an insurance claim. */
+/** Event key `claim_filed` — fingerprint `sha256:7c12db9e7f65ed7fb296c8126d15e99d468689658ec4e9a7d3f68933a4c12839`. */
+export interface ClaimFiledEvent {
+  claim_id: bigint;
+  stream_id: bigint;
+  recipient: string;
+  amount: bigint;
+}
+
+/** Emitted when an approved insurance claim is paid. */
+/** Event key `claim_paid` — fingerprint `sha256:946cca73f9740203f4348ee5127467ec30bc69e832680a890863483a710509e9`. */
+export interface ClaimPaidEvent {
+  claim_id: bigint;
+  recipient: string;
+  amount: bigint;
+  remaining_balance: bigint;
+}
+
+/** Emitted when the governor rejects an insurance claim. */
+/** Event key `claim_rejected` — fingerprint `sha256:9e9ad4bd703bda333f8ad1f182fcf8bb002087722163eb1a76807d3f3d9dffbd`. */
+export interface ClaimRejectedEvent {
+  claim_id: bigint;
+  reason: number;
 }
 
 /** Emitted when a release condition expires without being met. */
@@ -327,6 +369,30 @@ export interface PolicyInitializedEvent {
   admin: string;
 }
 
+/** Emitted when a sender spending policy rejects a stream or top-up. */
+/** Event key `policy_violation` — fingerprint `sha256:10071886268a2746a79e1f8805dc9ddf29deab41e25f509c5f090e2f0d6160c9`. */
+export interface PolicyViolationEvent {
+  sender: string;
+  stream_id: bigint;
+  violation_code: number;
+}
+
+/** Emitted when a settled stream adds time-weighted voting power. */
+/** Event key `power_accrued` — fingerprint `sha256:232e2f47141941af6627d84d054912046c45f45ff7718f0c5de604f8ad92ea2d`. */
+export interface PowerAccruedEvent {
+  participant: string;
+  stream_id: bigint;
+  power: bigint;
+}
+
+/** Emitted when a protocol-fee slice accrues to an insurance pool. */
+/** Event key `premium_accrued` — fingerprint `sha256:72903d27c1e52db990a59bbd91cb1bc03693d093c5d891a86a671f54513d5485`. */
+export interface PremiumAccruedEvent {
+  token: string;
+  amount: bigint;
+  pool_balance: bigint;
+}
+
 /** Emitted when a pending rate change is accepted and its rebalancing settles.  The four amounts are the whole funds-bug audit trail for one change, and they are exact by construction: `reserved_at_new_rate` is an integer product (`new_amount_per_second * window length`) and `deposit` is `owed_at_change + reserved_at_new_rate`. `adjustment` is the signed difference against the deposit before the change — positive means the sender topped up that amount, negative means the sender was refunded its absolute value, zero means the old reserve still covered the new rate exactly. */
 /** Event key `rate_change_accepted` — fingerprint `sha256:66b7fcbf7e912df0adfb728f6dd025e43a3678b76885950fb68c9e7b1ea41da3`. */
 export interface RateChangeAcceptedEvent {
@@ -375,6 +441,20 @@ export interface ScheduledStreamExecutedEvent {
   occurrence_index: number;
   occurrences_remaining: number;
   fee_paid: bigint;
+}
+
+/** Emitted when a sender revokes a spending policy. */
+/** Event key `sender_policy_revoked` — fingerprint `sha256:8030033801d3958a02d20bf73ec897334af25181a4c0b176f1e043e05f672d40`. */
+export interface SenderPolicyRevokedEvent {
+  sender: string;
+  version: number;
+}
+
+/** Emitted when a sender installs or updates a spending policy. */
+/** Event key `sender_policy_set` — fingerprint `sha256:8d74d339202956d5afd9f19ed4b22769f4b89c7d25da0623d9fb3bba0e479dfa`. */
+export interface SenderPolicySetEvent {
+  sender: string;
+  version: number;
 }
 
 /** Emitted when a proposal that aged out of its acceptance window is reclaimed, freeing its storage. The role never moved. */
@@ -577,6 +657,15 @@ export interface UpgradeProposedEvent {
   proposer: string;
 }
 
+/** Emitted when a participant casts a time-weighted community vote. */
+/** Event key `vote_cast` — fingerprint `sha256:df7a22f9ea409c602d3b89e28f5da15a3295136e9b7c9972ec532b3546b6518b`. */
+export interface VoteCastEvent {
+  proposal_id: bigint;
+  voter: string;
+  power: bigint;
+  support: boolean;
+}
+
 /** Emitted when the recipient withdraws accrued funds. */
 /** Event key `withdrawn` — fingerprint `sha256:f236ec39ef8dd77ec1e7b30edbfc08ea71734a2ddc55d234bc8e434f8dcf3277`. */
 export interface WithdrawnEvent {
@@ -591,8 +680,13 @@ export const EVENT_KEYS = {
   AdvanceDrawn: "advance_drawn",
   AdvanceLiquidated: "advance_liquidated",
   AdvanceRepaid: "advance_repaid",
+  BatchAmendmentApplied: "batch_amendment_applied",
+  BatchAmendmentProposed: "batch_amendment_proposed",
   BatchWithdrawSummary: "batch_withdraw_summary",
   BeneficiaryEnrolled: "beneficiary_enrolled",
+  ClaimFiled: "claim_filed",
+  ClaimPaid: "claim_paid",
+  ClaimRejected: "claim_rejected",
   ConditionExpired: "condition_expired",
   ConditionMet: "condition_met",
   ConditionRegistered: "condition_registered",
@@ -623,11 +717,16 @@ export const EVENT_KEYS = {
   PolicyHandoffCancelled: "policy_handoff_cancelled",
   PolicyHandoffProposed: "policy_handoff_proposed",
   PolicyInitialized: "policy_initialized",
+  PolicyViolation: "policy_violation",
+  PowerAccrued: "power_accrued",
+  PremiumAccrued: "premium_accrued",
   RateChangeAccepted: "rate_change_accepted",
   RateChangeProposed: "rate_change_proposed",
   ScheduledIntentCancelled: "scheduled_intent_cancelled",
   ScheduledIntentExpired: "scheduled_intent_expired",
   ScheduledStreamExecuted: "scheduled_stream_executed",
+  SenderPolicyRevoked: "sender_policy_revoked",
+  SenderPolicySet: "sender_policy_set",
   SenderTransferExpired: "sender_transfer_expired",
   SenderTransferProposed: "sender_transfer_proposed",
   SenderTransferred: "sender_transferred",
@@ -649,6 +748,7 @@ export const EVENT_KEYS = {
   TemplateInstantiated: "template_instantiated",
   UpgradeCancelled: "upgrade_cancelled",
   UpgradeProposed: "upgrade_proposed",
+  VoteCast: "vote_cast",
   Withdrawn: "withdrawn",
 } as const;
 
@@ -656,7 +756,7 @@ export const EVENT_KEYS = {
 export type ContractEventName = (typeof EVENT_KEYS)[keyof typeof EVENT_KEYS];
 
 /** Every event this registry knows about, even if a consumer ignores it. */
-export const ALL_CONTRACT_EVENT_NAMES: readonly ContractEventName[] = ["advance_drawn", "advance_liquidated", "advance_repaid", "batch_withdraw_summary", "beneficiary_enrolled", "condition_expired", "condition_met", "condition_registered", "contract_frozen_state_changed", "contract_upgraded", "dispute_expired", "dispute_raised", "dispute_resolved", "fee_charged", "fee_withdrawn", "governance_action_executed", "governance_action_proposed", "governance_action_signed", "governance_action_vetoed", "governance_signers_set", "hook_failed", "hook_invoked", "hook_registered", "operator_key_rotated", "oracle_config_updated", "oracle_stale_fallback", "oracle_time_reported", "ownership_accepted", "ownership_proposed", "policy_asset_executed", "policy_asset_queued", "policy_handoff_accepted", "policy_handoff_cancelled", "policy_handoff_proposed", "policy_initialized", "rate_change_accepted", "rate_change_proposed", "scheduled_intent_cancelled", "scheduled_intent_expired", "scheduled_stream_executed", "sender_transfer_expired", "sender_transfer_proposed", "sender_transferred", "sponsor_active_set", "sponsor_claim", "sponsor_registered", "storage_migrated", "stream_cancelled", "stream_created", "stream_paused", "stream_policy_set", "stream_record_migrated", "stream_refund_target_changed", "stream_resumed", "stream_scheduled", "stream_topped_up", "streams_created", "template_approved", "template_instantiated", "upgrade_cancelled", "upgrade_proposed", "withdrawn"] as const;
+export const ALL_CONTRACT_EVENT_NAMES: readonly ContractEventName[] = ["advance_drawn", "advance_liquidated", "advance_repaid", "batch_amendment_applied", "batch_amendment_proposed", "batch_withdraw_summary", "beneficiary_enrolled", "claim_filed", "claim_paid", "claim_rejected", "condition_expired", "condition_met", "condition_registered", "contract_frozen_state_changed", "contract_upgraded", "dispute_expired", "dispute_raised", "dispute_resolved", "fee_charged", "fee_withdrawn", "governance_action_executed", "governance_action_proposed", "governance_action_signed", "governance_action_vetoed", "governance_signers_set", "hook_failed", "hook_invoked", "hook_registered", "operator_key_rotated", "oracle_config_updated", "oracle_stale_fallback", "oracle_time_reported", "ownership_accepted", "ownership_proposed", "policy_asset_executed", "policy_asset_queued", "policy_handoff_accepted", "policy_handoff_cancelled", "policy_handoff_proposed", "policy_initialized", "policy_violation", "power_accrued", "premium_accrued", "rate_change_accepted", "rate_change_proposed", "scheduled_intent_cancelled", "scheduled_intent_expired", "scheduled_stream_executed", "sender_policy_revoked", "sender_policy_set", "sender_transfer_expired", "sender_transfer_proposed", "sender_transferred", "sponsor_active_set", "sponsor_claim", "sponsor_registered", "storage_migrated", "stream_cancelled", "stream_created", "stream_paused", "stream_policy_set", "stream_record_migrated", "stream_refund_target_changed", "stream_resumed", "stream_scheduled", "stream_topped_up", "streams_created", "template_approved", "template_instantiated", "upgrade_cancelled", "upgrade_proposed", "vote_cast", "withdrawn"] as const;
 
 /** Narrow an arbitrary RPC event name to a registered contract event. */
 export function isContractEventName(name: string): name is ContractEventName {
@@ -668,8 +768,13 @@ export const EVENT_STRUCT_BY_KEY: Record<ContractEventName, string> = {
   "advance_drawn": "AdvanceDrawn",
   "advance_liquidated": "AdvanceLiquidated",
   "advance_repaid": "AdvanceRepaid",
+  "batch_amendment_applied": "BatchAmendmentApplied",
+  "batch_amendment_proposed": "BatchAmendmentProposed",
   "batch_withdraw_summary": "BatchWithdrawSummary",
   "beneficiary_enrolled": "BeneficiaryEnrolled",
+  "claim_filed": "ClaimFiled",
+  "claim_paid": "ClaimPaid",
+  "claim_rejected": "ClaimRejected",
   "condition_expired": "ConditionExpired",
   "condition_met": "ConditionMet",
   "condition_registered": "ConditionRegistered",
@@ -700,11 +805,16 @@ export const EVENT_STRUCT_BY_KEY: Record<ContractEventName, string> = {
   "policy_handoff_cancelled": "PolicyHandoffCancelled",
   "policy_handoff_proposed": "PolicyHandoffProposed",
   "policy_initialized": "PolicyInitialized",
+  "policy_violation": "PolicyViolation",
+  "power_accrued": "PowerAccrued",
+  "premium_accrued": "PremiumAccrued",
   "rate_change_accepted": "RateChangeAccepted",
   "rate_change_proposed": "RateChangeProposed",
   "scheduled_intent_cancelled": "ScheduledIntentCancelled",
   "scheduled_intent_expired": "ScheduledIntentExpired",
   "scheduled_stream_executed": "ScheduledStreamExecuted",
+  "sender_policy_revoked": "SenderPolicyRevoked",
+  "sender_policy_set": "SenderPolicySet",
   "sender_transfer_expired": "SenderTransferExpired",
   "sender_transfer_proposed": "SenderTransferProposed",
   "sender_transferred": "SenderTransferred",
@@ -726,6 +836,7 @@ export const EVENT_STRUCT_BY_KEY: Record<ContractEventName, string> = {
   "template_instantiated": "TemplateInstantiated",
   "upgrade_cancelled": "UpgradeCancelled",
   "upgrade_proposed": "UpgradeProposed",
+  "vote_cast": "VoteCast",
   "withdrawn": "Withdrawn",
 }
 
@@ -751,8 +862,13 @@ export const EVENT_SHAPES: Record<ContractEventName, EventShape> = {
   "advance_drawn": { struct: "AdvanceDrawn", eventKey: "advance_drawn", fingerprint: "sha256:a1ccbf4cb818c7c6a04304662172d25e779228a24b7ff9a6eddbd5320a703b30", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"recipient","type":"Address"},{"name":"lender","type":"Address"},{"name":"amount","type":"i128"},{"name":"fee","type":"i128"},{"name":"repayment_bps","type":"u32"}] },
   "advance_liquidated": { struct: "AdvanceLiquidated", eventKey: "advance_liquidated", fingerprint: "sha256:5f5906f14d6b57f9283743db06e8790626acdf3f0d6c400870ff8e7c29482c97", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"recipient","type":"Address"},{"name":"lender","type":"Address"},{"name":"amount","type":"i128"},{"name":"remaining_unpaid","type":"i128"}] },
   "advance_repaid": { struct: "AdvanceRepaid", eventKey: "advance_repaid", fingerprint: "sha256:f560f54706bffd81f57564572c58de696f7a49630eabe708651fddf1b2b24e49", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"recipient","type":"Address"},{"name":"lender","type":"Address"},{"name":"amount","type":"i128"},{"name":"remaining_owed","type":"i128"}] },
+  "batch_amendment_applied": { struct: "BatchAmendmentApplied", eventKey: "batch_amendment_applied", fingerprint: "sha256:4907f66aa084a06905923da33a5643b66130fd301f98b86d27d9fda5003d2bbf", topics: [{"name":"batch_id","type":"u64"}], data: [{"name":"stream_ids","type":"Vec<u64>"},{"name":"effective_timestamp","type":"u64"}] },
+  "batch_amendment_proposed": { struct: "BatchAmendmentProposed", eventKey: "batch_amendment_proposed", fingerprint: "sha256:7c7b94e9404deca9c36bb504141d5970828d9aaaa2fd40db5403471765d18e77", topics: [{"name":"batch_id","type":"u64"}], data: [{"name":"sender","type":"Address"},{"name":"stream_ids","type":"Vec<u64>"},{"name":"expires_at","type":"u64"}] },
   "batch_withdraw_summary": { struct: "BatchWithdrawSummary", eventKey: "batch_withdraw_summary", fingerprint: "sha256:59b5ba85df9a81a2bcce7610b21b724aa1e5093d0d44a54cd46370ae0dfb6860", topics: [{"name":"recipient","type":"Address"}], data: [{"name":"settled","type":"Vec<WithdrawOutcome>"},{"name":"total","type":"i128"},{"name":"requested","type":"u32"},{"name":"skipped","type":"u32"}] },
   "beneficiary_enrolled": { struct: "BeneficiaryEnrolled", eventKey: "beneficiary_enrolled", fingerprint: "sha256:8a457d9c30ee67b51c5709af2eb838deacb19d55dc53a93055734d920e77e7d7", topics: [{"name":"beneficiary","type":"Address"},{"name":"kind","type":"Symbol"}], data: [{"name":"public_key","type":"BytesN<32>"}] },
+  "claim_filed": { struct: "ClaimFiled", eventKey: "claim_filed", fingerprint: "sha256:7c12db9e7f65ed7fb296c8126d15e99d468689658ec4e9a7d3f68933a4c12839", topics: [{"name":"claim_id","type":"u64"}], data: [{"name":"stream_id","type":"u64"},{"name":"recipient","type":"Address"},{"name":"amount","type":"i128"}] },
+  "claim_paid": { struct: "ClaimPaid", eventKey: "claim_paid", fingerprint: "sha256:946cca73f9740203f4348ee5127467ec30bc69e832680a890863483a710509e9", topics: [{"name":"claim_id","type":"u64"}], data: [{"name":"recipient","type":"Address"},{"name":"amount","type":"i128"},{"name":"remaining_balance","type":"i128"}] },
+  "claim_rejected": { struct: "ClaimRejected", eventKey: "claim_rejected", fingerprint: "sha256:9e9ad4bd703bda333f8ad1f182fcf8bb002087722163eb1a76807d3f3d9dffbd", topics: [{"name":"claim_id","type":"u64"}], data: [{"name":"reason","type":"u32"}] },
   "condition_expired": { struct: "ConditionExpired", eventKey: "condition_expired", fingerprint: "sha256:bf220e706c8ce581efbbe736ec16c394efbc07a20c00f49e71c078bff7604036", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"condition_id","type":"u64"}] },
   "condition_met": { struct: "ConditionMet", eventKey: "condition_met", fingerprint: "sha256:fd16a5a73e454ddfd921679ea89440f7f6b951bbf1162db6dfb3df891b8751b2", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"condition_id","type":"u64"}] },
   "condition_registered": { struct: "ConditionRegistered", eventKey: "condition_registered", fingerprint: "sha256:0ac12047ea7f10bc08646b56173ed2a639ac5ba1e6de4c4474b2eac59b1a09a6", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"condition_id","type":"u64"}] },
@@ -783,11 +899,16 @@ export const EVENT_SHAPES: Record<ContractEventName, EventShape> = {
   "policy_handoff_cancelled": { struct: "PolicyHandoffCancelled", eventKey: "policy_handoff_cancelled", fingerprint: "sha256:fd8cfe1334f22571cb7e11fc9b80c3c1e7ef39e6f4bbd46c3a66fc621363f221", topics: [{"name":"proposed_admin","type":"Address"}], data: [] },
   "policy_handoff_proposed": { struct: "PolicyHandoffProposed", eventKey: "policy_handoff_proposed", fingerprint: "sha256:79bdf5f57bbb23c39096223624e7f61a65da6e8073bbc5ebb4b4294ecee9e75c", topics: [{"name":"current_admin","type":"Address"}], data: [{"name":"proposed_admin","type":"Address"}] },
   "policy_initialized": { struct: "PolicyInitialized", eventKey: "policy_initialized", fingerprint: "sha256:332dec01d9e44b08a077228239c6b3fdcc435b4c59862a9efd6d4001a7cbd44b", topics: [], data: [{"name":"admin","type":"Address"}] },
+  "policy_violation": { struct: "PolicyViolation", eventKey: "policy_violation", fingerprint: "sha256:10071886268a2746a79e1f8805dc9ddf29deab41e25f509c5f090e2f0d6160c9", topics: [{"name":"sender","type":"Address"}], data: [{"name":"stream_id","type":"u64"},{"name":"violation_code","type":"u32"}] },
+  "power_accrued": { struct: "PowerAccrued", eventKey: "power_accrued", fingerprint: "sha256:232e2f47141941af6627d84d054912046c45f45ff7718f0c5de604f8ad92ea2d", topics: [{"name":"participant","type":"Address"}], data: [{"name":"stream_id","type":"u64"},{"name":"power","type":"u128"}] },
+  "premium_accrued": { struct: "PremiumAccrued", eventKey: "premium_accrued", fingerprint: "sha256:72903d27c1e52db990a59bbd91cb1bc03693d093c5d891a86a671f54513d5485", topics: [{"name":"token","type":"Address"}], data: [{"name":"amount","type":"i128"},{"name":"pool_balance","type":"i128"}] },
   "rate_change_accepted": { struct: "RateChangeAccepted", eventKey: "rate_change_accepted", fingerprint: "sha256:66b7fcbf7e912df0adfb728f6dd025e43a3678b76885950fb68c9e7b1ea41da3", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"accepted_by","type":"Address"},{"name":"new_amount_per_second","type":"i128"},{"name":"effective_from","type":"u64"},{"name":"owed_at_change","type":"i128"},{"name":"reserved_at_new_rate","type":"i128"},{"name":"adjustment","type":"i128"},{"name":"deposit","type":"i128"}] },
   "rate_change_proposed": { struct: "RateChangeProposed", eventKey: "rate_change_proposed", fingerprint: "sha256:9e2dec2cd991106085acabb92aaec4edf32ca518a688d2090ded15d91c7f70c0", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"proposed_by","type":"Address"},{"name":"counterparty","type":"Address"},{"name":"amount_per_second","type":"i128"},{"name":"expires_at","type":"u64"}] },
   "scheduled_intent_cancelled": { struct: "ScheduledIntentCancelled", eventKey: "scheduled_intent_cancelled", fingerprint: "sha256:fe727619a69c546daa9f512a6cbe4162453a8404bd8dba614384557f162e5f0e", topics: [{"name":"intent_id","type":"u64"}], data: [{"name":"sender","type":"Address"},{"name":"refund","type":"i128"}] },
   "scheduled_intent_expired": { struct: "ScheduledIntentExpired", eventKey: "scheduled_intent_expired", fingerprint: "sha256:708a995061ac8713d9a6fc7ea04f7c39eee313276cc42fb0cd9268f3210500ee", topics: [{"name":"intent_id","type":"u64"}], data: [{"name":"sender","type":"Address"},{"name":"refund","type":"i128"}] },
   "scheduled_stream_executed": { struct: "ScheduledStreamExecuted", eventKey: "scheduled_stream_executed", fingerprint: "sha256:318937479fdb35060d6640657c70d51fcda211fc4408f5902b7eac1224f89f06", topics: [{"name":"intent_id","type":"u64"}], data: [{"name":"keeper","type":"Address"},{"name":"stream_id","type":"u64"},{"name":"occurrence_index","type":"u32"},{"name":"occurrences_remaining","type":"u32"},{"name":"fee_paid","type":"i128"}] },
+  "sender_policy_revoked": { struct: "SenderPolicyRevoked", eventKey: "sender_policy_revoked", fingerprint: "sha256:8030033801d3958a02d20bf73ec897334af25181a4c0b176f1e043e05f672d40", topics: [{"name":"sender","type":"Address"}], data: [{"name":"version","type":"u32"}] },
+  "sender_policy_set": { struct: "SenderPolicySet", eventKey: "sender_policy_set", fingerprint: "sha256:8d74d339202956d5afd9f19ed4b22769f4b89c7d25da0623d9fb3bba0e479dfa", topics: [{"name":"sender","type":"Address"}], data: [{"name":"version","type":"u32"}] },
   "sender_transfer_expired": { struct: "SenderTransferExpired", eventKey: "sender_transfer_expired", fingerprint: "sha256:52f1ec5001642966297a3a1d96e94c2a155edfeccf6622164a0834724863ba60", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"sender_from","type":"Address"},{"name":"new_sender","type":"Address"},{"name":"nonce","type":"u64"}] },
   "sender_transfer_proposed": { struct: "SenderTransferProposed", eventKey: "sender_transfer_proposed", fingerprint: "sha256:7012eae001bbc92c7ecce6275cab31714970ba85e5ab1bde135e93dff4ec0f92", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"sender_from","type":"Address"},{"name":"new_sender","type":"Address"},{"name":"nonce","type":"u64"},{"name":"expires_at","type":"u64"},{"name":"transfer_refund_rights","type":"bool"}] },
   "sender_transferred": { struct: "SenderTransferred", eventKey: "sender_transferred", fingerprint: "sha256:db820aba8791ee0f230ae1ae551812251458457ad061bd13b996b21a2c18cf0d", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"sender_from","type":"Address"},{"name":"sender_to","type":"Address"},{"name":"nonce","type":"u64"},{"name":"refund_rights_transferred","type":"bool"}] },
@@ -809,6 +930,7 @@ export const EVENT_SHAPES: Record<ContractEventName, EventShape> = {
   "template_instantiated": { struct: "TemplateInstantiated", eventKey: "template_instantiated", fingerprint: "sha256:63f92af80b873f8cd742077a72498031574d7aa73521cd714154b8a3e3b588af", topics: [{"name":"template_id","type":"u32"}], data: [{"name":"version","type":"u32"},{"name":"stream_id","type":"u64"},{"name":"sender","type":"Address"},{"name":"recipient","type":"Address"},{"name":"deposit","type":"i128"}] },
   "upgrade_cancelled": { struct: "UpgradeCancelled", eventKey: "upgrade_cancelled", fingerprint: "sha256:f37b6e8e716733fe20e8a2dcba11444e9e1e842470b97f9b6d820f26db976523", topics: [{"name":"new_wasm_hash","type":"BytesN<32>"}], data: [{"name":"cancelled_by","type":"Address"}] },
   "upgrade_proposed": { struct: "UpgradeProposed", eventKey: "upgrade_proposed", fingerprint: "sha256:ab70c35bf98b5e08a1067687e23f361f518f99754db27f14f84208d543cce5ed", topics: [{"name":"new_wasm_hash","type":"BytesN<32>"}], data: [{"name":"unlock_time","type":"u64"},{"name":"proposer","type":"Address"}] },
+  "vote_cast": { struct: "VoteCast", eventKey: "vote_cast", fingerprint: "sha256:df7a22f9ea409c602d3b89e28f5da15a3295136e9b7c9972ec532b3546b6518b", topics: [{"name":"proposal_id","type":"u64"}], data: [{"name":"voter","type":"Address"},{"name":"power","type":"u128"},{"name":"support","type":"bool"}] },
   "withdrawn": { struct: "Withdrawn", eventKey: "withdrawn", fingerprint: "sha256:f236ec39ef8dd77ec1e7b30edbfc08ea71734a2ddc55d234bc8e434f8dcf3277", topics: [{"name":"stream_id","type":"u64"}], data: [{"name":"recipient","type":"Address"},{"name":"amount","type":"i128"},{"name":"withdrawn_total","type":"i128"}] },
 }
 
@@ -817,8 +939,13 @@ export const EVENT_FINGERPRINTS: Record<string, string> = {
   "AdvanceDrawn": "sha256:a1ccbf4cb818c7c6a04304662172d25e779228a24b7ff9a6eddbd5320a703b30",
   "AdvanceLiquidated": "sha256:5f5906f14d6b57f9283743db06e8790626acdf3f0d6c400870ff8e7c29482c97",
   "AdvanceRepaid": "sha256:f560f54706bffd81f57564572c58de696f7a49630eabe708651fddf1b2b24e49",
+  "BatchAmendmentApplied": "sha256:4907f66aa084a06905923da33a5643b66130fd301f98b86d27d9fda5003d2bbf",
+  "BatchAmendmentProposed": "sha256:7c7b94e9404deca9c36bb504141d5970828d9aaaa2fd40db5403471765d18e77",
   "BatchWithdrawSummary": "sha256:59b5ba85df9a81a2bcce7610b21b724aa1e5093d0d44a54cd46370ae0dfb6860",
   "BeneficiaryEnrolled": "sha256:8a457d9c30ee67b51c5709af2eb838deacb19d55dc53a93055734d920e77e7d7",
+  "ClaimFiled": "sha256:7c12db9e7f65ed7fb296c8126d15e99d468689658ec4e9a7d3f68933a4c12839",
+  "ClaimPaid": "sha256:946cca73f9740203f4348ee5127467ec30bc69e832680a890863483a710509e9",
+  "ClaimRejected": "sha256:9e9ad4bd703bda333f8ad1f182fcf8bb002087722163eb1a76807d3f3d9dffbd",
   "ConditionExpired": "sha256:bf220e706c8ce581efbbe736ec16c394efbc07a20c00f49e71c078bff7604036",
   "ConditionMet": "sha256:fd16a5a73e454ddfd921679ea89440f7f6b951bbf1162db6dfb3df891b8751b2",
   "ConditionRegistered": "sha256:0ac12047ea7f10bc08646b56173ed2a639ac5ba1e6de4c4474b2eac59b1a09a6",
@@ -849,11 +976,16 @@ export const EVENT_FINGERPRINTS: Record<string, string> = {
   "PolicyHandoffCancelled": "sha256:fd8cfe1334f22571cb7e11fc9b80c3c1e7ef39e6f4bbd46c3a66fc621363f221",
   "PolicyHandoffProposed": "sha256:79bdf5f57bbb23c39096223624e7f61a65da6e8073bbc5ebb4b4294ecee9e75c",
   "PolicyInitialized": "sha256:332dec01d9e44b08a077228239c6b3fdcc435b4c59862a9efd6d4001a7cbd44b",
+  "PolicyViolation": "sha256:10071886268a2746a79e1f8805dc9ddf29deab41e25f509c5f090e2f0d6160c9",
+  "PowerAccrued": "sha256:232e2f47141941af6627d84d054912046c45f45ff7718f0c5de604f8ad92ea2d",
+  "PremiumAccrued": "sha256:72903d27c1e52db990a59bbd91cb1bc03693d093c5d891a86a671f54513d5485",
   "RateChangeAccepted": "sha256:66b7fcbf7e912df0adfb728f6dd025e43a3678b76885950fb68c9e7b1ea41da3",
   "RateChangeProposed": "sha256:9e2dec2cd991106085acabb92aaec4edf32ca518a688d2090ded15d91c7f70c0",
   "ScheduledIntentCancelled": "sha256:fe727619a69c546daa9f512a6cbe4162453a8404bd8dba614384557f162e5f0e",
   "ScheduledIntentExpired": "sha256:708a995061ac8713d9a6fc7ea04f7c39eee313276cc42fb0cd9268f3210500ee",
   "ScheduledStreamExecuted": "sha256:318937479fdb35060d6640657c70d51fcda211fc4408f5902b7eac1224f89f06",
+  "SenderPolicyRevoked": "sha256:8030033801d3958a02d20bf73ec897334af25181a4c0b176f1e043e05f672d40",
+  "SenderPolicySet": "sha256:8d74d339202956d5afd9f19ed4b22769f4b89c7d25da0623d9fb3bba0e479dfa",
   "SenderTransferExpired": "sha256:52f1ec5001642966297a3a1d96e94c2a155edfeccf6622164a0834724863ba60",
   "SenderTransferProposed": "sha256:7012eae001bbc92c7ecce6275cab31714970ba85e5ab1bde135e93dff4ec0f92",
   "SenderTransferred": "sha256:db820aba8791ee0f230ae1ae551812251458457ad061bd13b996b21a2c18cf0d",
@@ -875,5 +1007,6 @@ export const EVENT_FINGERPRINTS: Record<string, string> = {
   "TemplateInstantiated": "sha256:63f92af80b873f8cd742077a72498031574d7aa73521cd714154b8a3e3b588af",
   "UpgradeCancelled": "sha256:f37b6e8e716733fe20e8a2dcba11444e9e1e842470b97f9b6d820f26db976523",
   "UpgradeProposed": "sha256:ab70c35bf98b5e08a1067687e23f361f518f99754db27f14f84208d543cce5ed",
+  "VoteCast": "sha256:df7a22f9ea409c602d3b89e28f5da15a3295136e9b7c9972ec532b3546b6518b",
   "Withdrawn": "sha256:f236ec39ef8dd77ec1e7b30edbfc08ea71734a2ddc55d234bc8e434f8dcf3277"
 };

@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/vote_cast.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when a participant casts a time-weighted community vote.",
   "properties": {
     "power": {
       "minimum": 0,

@@ -385,6 +385,71 @@ function loadRegistry(): {
   throw new Error("cannot locate schemas/events/registry.json");
 }
 
+const LEGACY_EVENT_NUMBERS = [
+  "ADVANCE_DRAWN",
+  "ADVANCE_LIQUIDATED",
+  "ADVANCE_REPAID",
+  "BATCH_WITHDRAW_SUMMARY",
+  "BENEFICIARY_ENROLLED",
+  "CONDITION_EXPIRED",
+  "CONDITION_MET",
+  "CONDITION_REGISTERED",
+  "CONTRACT_FROZEN_STATE_CHANGED",
+  "CONTRACT_UPGRADED",
+  "DISPUTE_EXPIRED",
+  "DISPUTE_RAISED",
+  "DISPUTE_RESOLVED",
+  "FEE_CHARGED",
+  "FEE_WITHDRAWN",
+  "GOVERNANCE_ACTION_EXECUTED",
+  "GOVERNANCE_ACTION_PROPOSED",
+  "GOVERNANCE_ACTION_SIGNED",
+  "GOVERNANCE_ACTION_VETOED",
+  "GOVERNANCE_SIGNERS_SET",
+  "HOOK_FAILED",
+  "HOOK_INVOKED",
+  "HOOK_REGISTERED",
+  "OPERATOR_KEY_ROTATED",
+  "ORACLE_CONFIG_UPDATED",
+  "ORACLE_STALE_FALLBACK",
+  "ORACLE_TIME_REPORTED",
+  "OWNERSHIP_ACCEPTED",
+  "OWNERSHIP_PROPOSED",
+  "POLICY_ASSET_EXECUTED",
+  "POLICY_ASSET_QUEUED",
+  "POLICY_HANDOFF_ACCEPTED",
+  "POLICY_HANDOFF_CANCELLED",
+  "POLICY_HANDOFF_PROPOSED",
+  "POLICY_INITIALIZED",
+  "RATE_CHANGE_ACCEPTED",
+  "RATE_CHANGE_PROPOSED",
+  "SCHEDULED_INTENT_CANCELLED",
+  "SCHEDULED_INTENT_EXPIRED",
+  "SCHEDULED_STREAM_EXECUTED",
+  "SENDER_TRANSFER_EXPIRED",
+  "SENDER_TRANSFER_PROPOSED",
+  "SENDER_TRANSFERRED",
+  "SPONSOR_ACTIVE_SET",
+  "SPONSOR_CLAIM",
+  "SPONSOR_REGISTERED",
+  "STORAGE_MIGRATED",
+  "STREAM_CANCELLED",
+  "STREAM_CREATED",
+  "STREAM_PAUSED",
+  "STREAM_POLICY_SET",
+  "STREAM_RECORD_MIGRATED",
+  "STREAM_REFUND_TARGET_CHANGED",
+  "STREAM_RESUMED",
+  "STREAM_SCHEDULED",
+  "STREAM_TOPPED_UP",
+  "STREAMS_CREATED",
+  "TEMPLATE_APPROVED",
+  "TEMPLATE_INSTANTIATED",
+  "UPGRADE_CANCELLED",
+  "UPGRADE_PROPOSED",
+  "WITHDRAWN",
+] as const;
+
 test("proto/registry freshness gate: events.proto mirrors registry.json and generated/events.ts", () => {
   const proto = readFileSync(locateFile("grpc/events.proto"), "utf8");
   const registry = loadRegistry();
@@ -405,10 +470,26 @@ test("proto/registry freshness gate: events.proto mirrors registry.json and gene
   assert.deepEqual(protoKeys, registryKeys, "proto EventName enum must list every registry event key");
   assert.deepEqual(protoKeys, [...ALL_CONTRACT_EVENT_NAMES].sort(), "proto enum must match generated/events.ts");
   assert.equal(registry.registry_version, 1);
-  // Enum numbering is dense from 1 (0 is the proto3 unspecified value).
+  // Existing enum numbers are wire-compatible API: additions append new values
+  // even when their alphabetical position is earlier in the declaration.
   assert.deepEqual(
-    enumNames.filter((e) => e.name !== "EVENT_NAME_UNSPECIFIED").map((e) => e.value),
-    registryKeys.map((_key, i) => i + 1)
+    Object.fromEntries(enumNames.map((e) => [e.name, e.value])),
+    {
+      EVENT_NAME_UNSPECIFIED: 0,
+      ...Object.fromEntries(LEGACY_EVENT_NUMBERS.map((name, index) => [name, index + 1])),
+      BATCH_AMENDMENT_APPLIED: 63,
+      BATCH_AMENDMENT_PROPOSED: 64,
+      CLAIM_FILED: 65,
+      CLAIM_PAID: 66,
+      CLAIM_REJECTED: 67,
+      POLICY_VIOLATION: 68,
+      POWER_ACCRUED: 69,
+      PREMIUM_ACCRUED: 70,
+      SENDER_POLICY_REVOKED: 71,
+      SENDER_POLICY_SET: 72,
+      VOTE_CAST: 73,
+    },
+    "existing EventName numbers must remain stable and additions must be append-only",
   );
 
   // StreamEvent fields: number, proto type and name, in proto order.

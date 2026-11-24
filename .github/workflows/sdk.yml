@@ -52,6 +52,25 @@ jobs:
       - name: Generated clients are up to date
         run: python3 sdks/generator/generate.py --check
 
+  python:
+    name: Python SDK — install / conformance (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: python3 -m pip install ./sdks/python
+
+      - name: Runtime and vector conformance tests
+        run: python3 -m unittest discover -s sdks/python/tests -v
+
   vectors:
     name: Conformance vectors — deterministic
     runs-on: ubuntu-latest

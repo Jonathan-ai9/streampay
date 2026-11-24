@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/batch_amendment_proposed.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when a threshold-consent batch amendment is proposed.",
   "properties": {
     "expires_at": {
       "minimum": 0,

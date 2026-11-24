@@ -3,7 +3,7 @@
   "$id": "https://streampay.dev/schemas/events/v1/events/claim_rejected.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "",
+  "description": "Emitted when the governor rejects an insurance claim.",
   "properties": {
     "reason": {
       "maximum": 4294967295,

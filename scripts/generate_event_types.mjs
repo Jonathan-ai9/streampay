@@ -40,6 +40,7 @@ const TS_PRIMITIVES = {
   bool: "boolean",
   u32: "number",
   u64: "bigint",
+  u128: "bigint",
   i64: "bigint",
   i128: "bigint",
   Address: "string",
@@ -199,19 +200,21 @@ function generateDocs(registry) {
   lines.push("# StreamPay contract events");
   lines.push("");
   lines.push(
-    "Every event the contract emits, with its on-chain topic layout and decoded data fields." +
-      " This catalogue is generated: the registry (`schemas/events/`) is the machine-readable" +
-      " source and CI enforces additive-only compatibility — see [schemas/events/README.md](../schemas/events/README.md)."
+    "Every registered event shape, with its on-chain topic layout and decoded data fields." +
+      " Shapes marked `enabled: false` in the registry are preserved for compatibility but are not" +
+      " emitted by the deployable contract. This catalogue is generated: the registry (`schemas/events/`)" +
+      " is the machine-readable source and CI enforces additive-only compatibility — see" +
+      " [schemas/events/README.md](../schemas/events/README.md)."
   );
   lines.push("");
-  lines.push("| Event key | Struct | Topics (positional) | Data fields | Fingerprint |");
-  lines.push("| --- | --- | --- | --- | --- |");
+  lines.push("| Event key | Struct | Status | Topics (positional) | Data fields | Fingerprint |");
+  lines.push("| --- | --- | --- | --- | --- | --- |");
   for (const structName of structNames) {
     const ev = events[structName];
     const topics = ev.topics.map((t) => `\`${t.name}: ${t.type}\``).join(", ") || "—";
     const data = ev.data.map((t) => `\`${t.name}: ${t.type}\``).join(", ") || "—";
     lines.push(
-      `| \`${ev.event_key}\` | \`${structName}\` | ${topics} | ${data} | \`${ev.fingerprint.slice(0, 18)}…\` |`
+      `| \`${ev.event_key}\` | \`${structName}\` | ${ev.enabled === false ? "disabled" : "enabled"} | ${topics} | ${data} | \`${ev.fingerprint.slice(0, 18)}…\` |`
     );
   }
   const definitions = registry.definitions ?? {};
