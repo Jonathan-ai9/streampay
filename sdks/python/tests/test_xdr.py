@@ -16,7 +16,9 @@ from streampay_readonly import ContractError, DecodeError, EncodeError, ScVal, d
 from streampay_readonly._generated import _encode_Stream, _encode_StreamStatus  # noqa: E402
 from streampay_readonly._xdr import (  # noqa: E402
     _MAX_DEPTH,
+    _Reader,
     _decode_fixed_bytes,
+    _read_scval,
     _encode_address,
     _encode_i128,
     decode_invoke_contract_args,
@@ -121,6 +123,20 @@ def contract_event_xdr(topic: ScVal | None, data: ScVal | None = None, event_typ
     return raw_contract_event_xdr(topics, data, event_type)
 
 
+def storage_event_xdr(name: str) -> bytes:
+    root = Path(__file__).resolve().parents[3] / "test_fixtures" / "storage" / "events"
+    blob = (root / f"{name}.bin").read_bytes()
+    topics_length = struct.unpack("<I", blob[:4])[0]
+    topics_offset = 4
+    data_offset = topics_offset + topics_length
+    data_length = struct.unpack("<I", blob[data_offset:data_offset + 4])[0]
+    reader = _Reader(blob[topics_offset:data_offset])
+    topics = tuple(_read_scval(reader) for _ in range(reader.count(4)))
+    reader.expect_end()
+    data = decode_scval(blob[data_offset + 4:data_offset + 4 + data_length])
+    return raw_contract_event_xdr(topics, data)
+
+
 def raw_map_xdr(entries: tuple[tuple[ScVal, ScVal], ...]) -> bytes:
     return (
         struct.pack(">iII", 17, 1, len(entries))
@@ -168,11 +184,16 @@ class ReadOnlyXdrTest(unittest.TestCase):
         with self.assertRaisesRegex(DecodeError, "Stream.sender"):
             streampay.decode_get_stream_result(replace_stream_field("sender", None))
 
-    def test_optional_fields_accept_absent_and_void_values(self) -> None:
+    def test_optional_event_fields_accept_absent_and_void_values(self) -> None:
         for value in (None, ScVal("void", None)):
             with self.subTest(value=value):
                 stream = streampay.decode_get_stream_result(replace_stream_field("use_oracle", value))
                 self.assertIsNone(stream.use_oracle)
+
+        event = decode_stream_pay_event(storage_event_xdr("stream_policy_set"), CONTRACT_ID)
+        self.assertIsNone(event.old_policy)
+        self.assertEqual(event.new_policy.min_rate, 100)
+        self.assertEqual(event.new_policy.max_duration, 31_536_000)
 
     def test_generated_struct_encoder_roundtrips_decoded_results(self) -> None:
         stream = streampay.decode_get_stream_result(active_stream_xdr())

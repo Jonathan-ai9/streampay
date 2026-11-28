@@ -177,7 +177,8 @@ describe("tax-lot pagination and serialization", () => {
     const json = await collectText(serializeTaxLots((async function* () { yield* rows; })(), "json"));
     assert.equal(
       csv,
-      await readFile(new URL("./__fixtures__/tax-lots.golden.csv", import.meta.url), "utf8")
+      (await readFile(new URL("./__fixtures__/tax-lots.golden.csv", import.meta.url), "utf8"))
+        .replace(/\r\n/g, "\n")
     );
     assert.equal(
       json,

@@ -2040,8 +2040,8 @@ class StreamPolicySet(EventBase):
         if len(topics) != 1:
             raise DecodeError(f'{context}: expected 1 event topics, got {len(topics)}')
         data = _struct_fields(event.data, 'StreamPolicySet')
-        token = _decode_option(_field(data, 'token', context), lambda item: _decode_address(item, 'StreamPolicySet.token'), 'StreamPolicySet.token')
-        old_policy = _decode_option(_field(data, 'old_policy', context), lambda item: StreamPolicy.from_scval(item, 'StreamPolicySet.old_policy'), 'StreamPolicySet.old_policy')
+        token = _optional_field(data, 'token', lambda item: _decode_address(item, 'StreamPolicySet.token'), 'StreamPolicySet.token')
+        old_policy = _optional_field(data, 'old_policy', lambda item: StreamPolicy.from_scval(item, 'StreamPolicySet.old_policy'), 'StreamPolicySet.old_policy')
         new_policy = StreamPolicy.from_scval(_field(data, 'new_policy', context), 'StreamPolicySet.new_policy')
         return cls(contract_id=event.contract_id, token=token, old_policy=old_policy, new_policy=new_policy)
 

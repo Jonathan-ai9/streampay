@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import ir
@@ -95,6 +94,106 @@ from ._xdr import (
     decode_scval,
 )
 """
+
+
+def _type_spec(value: ir.TypeRef) -> object:
+    if value.kind in ("primitive", "named"):
+        assert value.name is not None
+        return value.name
+    if value.kind == "vec":
+        assert value.item is not None
+        return {"vec": _type_spec(value.item)}
+    if value.kind == "option":
+        assert value.item is not None
+        return {"option": _type_spec(value.item)}
+    if value.kind == "result":
+        assert value.ok is not None and value.err is not None
+        return {"result": {"ok": _type_spec(value.ok), "err": _type_spec(value.err)}}
+    raise ValueError(f"unsupported IR type kind {value.kind!r}")
+
+
+def _field_spec(value: ir.Field) -> dict[str, object]:
+    result: dict[str, object] = {"name": value.name, "type": _type_spec(value.type)}
+    if value.doc:
+        result["doc"] = value.doc
+    return result
+
+
+def _spec_dict(spec: ir.SpecIR) -> dict:
+    return {
+        "schema": spec.schema,
+        "generator": spec.generator,
+        "contract": {
+            "name": spec.contract.name,
+            "crate": spec.contract.crate,
+            "version": spec.contract.version,
+            "description": spec.contract.description,
+        },
+        "constants": {
+            item.name: {"value": item.value, "type": item.type}
+            for item in spec.constants
+        },
+        "functions": [
+            {
+                "name": item.name,
+                "args": [_field_spec(argument) for argument in item.args],
+                "returns": _type_spec(item.returns),
+                "mutating": item.mutating,
+                **({"error": item.error} if item.error is not None else {}),
+                **({"doc": item.doc} if item.doc else {}),
+            }
+            for item in spec.functions
+        ],
+        "structs": [
+            {
+                "name": item.name,
+                "fields": [_field_spec(field) for field in item.fields],
+                **({"doc": item.doc} if item.doc else {}),
+            }
+            for item in spec.structs
+        ],
+        "enums": [
+            {
+                "name": item.name,
+                "encoding": item.encoding,
+                "cases": [
+                    {
+                        "name": case.name,
+                        **({"value": case.value} if case.value is not None else {}),
+                        **({"doc": case.doc} if case.doc else {}),
+                    }
+                    for case in item.cases
+                ],
+                **({"doc": item.doc} if item.doc else {}),
+            }
+            for item in spec.enums
+        ],
+        "unions": [
+            {
+                "name": item.name,
+                "cases": [
+                    {
+                        "name": case.name,
+                        "types": [_type_spec(value) for value in case.types],
+                        **({"doc": case.doc} if case.doc else {}),
+                    }
+                    for case in item.cases
+                ],
+                **({"doc": item.doc} if item.doc else {}),
+            }
+            for item in spec.unions
+        ],
+        "events": [
+            {
+                "name": item.name,
+                "topic": item.topic,
+                "topicFields": [_field_spec(field) for field in item.topic_fields],
+                "dataFields": [_field_spec(field) for field in item.data_fields],
+                **({"doc": item.doc} if item.doc else {}),
+            }
+            for item in spec.events
+        ],
+    }
 
 
 def read_functions(spec: dict) -> list[dict]:
@@ -434,7 +533,11 @@ def generate_event(event: dict) -> list[str]:
     lines.append(f"        data = _struct_fields(event.data, {name!r})")
     for field in data_fields:
         context = f"{name}.{field['name']}"
-        decoded = decode_expr(field["type"], f"_field(data, {field['name']!r}, context)", context)
+        if isinstance(field["type"], dict) and "option" in field["type"]:
+            decoded = decode_expr(field["type"]["option"], "item", context)
+            decoded = f"_optional_field(data, {field['name']!r}, lambda item: {decoded}, {context!r})"
+        else:
+            decoded = decode_expr(field["type"], f"_field(data, {field['name']!r}, context)", context)
         lines.append(f"        {field['name']} = {decoded}")
     names = ["contract_id=event.contract_id"]
     names.extend(f"{topic['name']}={topic['name']}" for topic in topics)
@@ -511,7 +614,7 @@ def generate_event_decoder(events: list[dict]) -> list[str]:
 
 def outputs(spec: ir.SpecIR | dict, fingerprint: str, errors: list[tuple[int, str]]) -> dict[Path, str]:
     if isinstance(spec, ir.SpecIR):
-        spec = json.loads((ROOT / "sdks" / "spec" / "streampay.spec.json").read_text(encoding="utf-8"))
+        spec = _spec_dict(spec)
     structs, enums, unions = reachable_types(spec)
     functions = read_functions(spec)
     events = spec["events"]

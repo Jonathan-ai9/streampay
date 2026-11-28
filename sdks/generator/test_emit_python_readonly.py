@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import ast
 import json
-import tomllib
+import re
 import unittest
+from dataclasses import replace
 
 import check_contract_surface as guard
 import emit_python_readonly as readonly_emitter
 import generate
+import ir
 
 
 class PythonEmitterTest(unittest.TestCase):
@@ -124,13 +126,26 @@ class PythonEmitterTest(unittest.TestCase):
             f"CONTRACT_VERSION = {self.spec['contract']['version']!r}", text
         )
 
-    def test_package_version_matches_spec_and_has_no_runtime_dependencies(self) -> None:
-        pyproject = tomllib.loads(
-            (readonly_emitter.PACKAGE_DIR / "pyproject.toml").read_text(encoding="utf-8")
+    def test_supplied_ir_is_rendered_without_reloading_the_canonical_spec(self) -> None:
+        parsed = ir.parse_spec(self.spec)
+        self.assertEqual(
+            readonly_emitter.outputs(parsed, self.fingerprint, self.errors),
+            self.outputs,
         )
-        project = pyproject["project"]
-        self.assertEqual(project["version"], self.spec["contract"]["version"])
-        self.assertEqual(project["dependencies"], [])
+        changed = replace(parsed, contract=replace(parsed.contract, version="9.9.9"))
+        generated = next(iter(readonly_emitter.outputs(changed, "synthetic", self.errors).values()))
+        self.assertIn("SPEC_FINGERPRINT = 'synthetic'", generated)
+        self.assertIn("CONTRACT_VERSION = '9.9.9'", generated)
+
+    def test_package_version_matches_spec_and_has_no_runtime_dependencies(self) -> None:
+        text = (readonly_emitter.PACKAGE_DIR / "pyproject.toml").read_text(encoding="utf-8")
+        project = text.split("[project]", 1)[1].split("\n[", 1)[0]
+        version = re.search(r'^version\s*=\s*"([^"]+)"', project, re.MULTILINE)
+        dependencies = re.search(r"^dependencies\s*=\s*(\[[^\]]*\])", project, re.MULTILINE)
+        self.assertIsNotNone(version)
+        self.assertIsNotNone(dependencies)
+        self.assertEqual(version.group(1), self.spec["contract"]["version"])
+        self.assertEqual(ast.literal_eval(dependencies.group(1)), [])
 
 
 if __name__ == "__main__":

@@ -367,7 +367,7 @@ export class OutboxStore {
     const rows = this.db
       .prepare(
         `SELECT o.seq, o.idempotency_key, o.event_id, o.stream_id, o.name, o.ledger,
-                e.ledger_closed_at, o.ledger_cursor, o.payload, o.ingested_at
+                e.ledger_closed_at, e.tx_hash, o.ledger_cursor, o.payload, o.ingested_at
          FROM outbox_events o
          LEFT JOIN events e ON e.id = o.event_id
          WHERE o.stream_id = ? AND o.seq > ? AND o.retracted_at IS NULL
@@ -382,6 +382,7 @@ export class OutboxStore {
       name: String(r.name),
       ledger: Number(r.ledger),
       ledger_closed_at: String(r.ledger_closed_at),
+      tx_hash: r.tx_hash === null || r.tx_hash === undefined ? null : String(r.tx_hash),
       ledger_cursor: String(r.ledger_cursor),
       payload: this.parsePayload(r.payload),
       ingested_at: String(r.ingested_at),
